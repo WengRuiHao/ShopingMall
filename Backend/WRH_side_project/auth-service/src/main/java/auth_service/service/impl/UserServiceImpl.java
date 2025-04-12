@@ -137,7 +137,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public Login addUserByRole(String username, String role) {
         User user = userRepository.findUserByUsername(username).orElseThrow(() -> new NotFoundException("使用者不存在，新增失敗!"));
-        Role map=roleRepository.findRole(role).orElseThrow(()->new NotFoundException("角色不存在，新增失敗!"));
+        Role map=roleRepository.findRole(role).orElseThrow(()->new NotFoundException(role+"不存在，新增失敗!"));
+        boolean alreadyHasRole=user.getUserRoles().stream().anyMatch(userRole -> userRole.getUserRole().getRole().equalsIgnoreCase(role));
+        if(alreadyHasRole ){
+            throw new ConflictException("使用者已經有"+role+"，新增失敗");
+        }
 
         UserRole userRole=new UserRole();
         userRole.setUserName(user);
@@ -153,7 +157,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public Login deleteUserByRole(String username, String role) {
         User user = userRepository.findUserByUsername(username).orElseThrow(() -> new NotFoundException("使用者不存在，刪除失敗!"));
-        Role map=roleRepository.findRole(role).orElseThrow(()->new NotFoundException("角色不存在，刪除失敗!"));
+        Role map=roleRepository.findRole(role).orElseThrow(()->new NotFoundException(role+"不存在，刪除失敗!"));
+        boolean alreadyHasRole=user.getUserRoles().stream().anyMatch(userRole -> userRole.getUserRole().getRole().equalsIgnoreCase(role));
+        if(!alreadyHasRole ){
+            throw new ConflictException("使用者沒有"+role+"，刪除失敗");
+        }
 
         int mount=userRepository.deleteRolesByUser(user,map);
         if(mount==0){
