@@ -27,8 +27,8 @@ public class User {
     @Column(name = "password", length = 150, nullable = false)
     private String userPassword; // 使用者Hash密碼
 
-    @Column(name = "salt", length = 150, nullable = false)
-    private String salt;  // 隨機鹽
+//    @Column(name = "salt", length = 150, nullable = false)
+//    private String salt;  // 隨機鹽
 
     @Column(name = "nick_Name", length = 150, nullable = true)
     private String nickName; // 暱稱
@@ -58,7 +58,6 @@ public class User {
                 "userId=" + userId +
                 ", userName='" + userName + '\'' +
                 ", userPassword='" + userPassword + '\'' +
-                ", salt='" + salt + '\'' +
                 ", nickName='" + nickName + '\'' +
                 ", gender='" + gender + '\'' +
                 ", email='" + email + '\'' +

@@ -14,6 +14,7 @@ import auth_service.util.Hash;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,6 +33,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     public List<Register> findAllUser() {
         return List.of();
@@ -47,7 +51,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Login checkUser(Register register) {
         User user = userRepository.findUserByUsername(register.getUserName()).orElseThrow(() -> new NotFoundException("使用者不存在，登入失敗!"));
-        if (!Hash.getHash(register.getUserPassword(), user.getSalt()).equals(user.getUserPassword())) {
+        if (!passwordEncoder.matches(register.getUserPassword(), user.getUserPassword())) {
             throw new NotFoundException("密碼輸入錯誤，登入失敗!");
         }
         Set<String> role=userRepository.findRoleByUser(user).stream().collect(Collectors.toSet());
@@ -61,10 +65,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public Register ForgetUserByPassword(String username, String password) {
         User user = userRepository.findUserByUsername(username).orElseThrow(() -> new NotFoundException("使用者不存在，修改失敗"));
-        String salt = Hash.getSalt();
-        String newPassword = Hash.getHash(password, salt);
+        String newPassword = passwordEncoder.encode(password);
         user.setUserPassword(newPassword);
-        user.setSalt(salt);
         Register register = objectMapper.convertValue(user, Register.class);
         return register;
     }
@@ -75,14 +77,12 @@ public class UserServiceImpl implements UserService {
         if (optUser.isPresent()) {
             throw new ConflictException("此會員已存在，註冊失敗!");
         }
-        //做密碼雜湊
-        String salt = Hash.getSalt();
-        String password = Hash.getHash(register.getUserPassword(), salt);
+
+        String password=passwordEncoder.encode(register.getUserPassword());
 
         User user=new User();
         user.setUserName(register.getUserName());
         user.setUserPassword(password);
-        user.setSalt(salt);
         user.setGender(register.getGender());
         user.setEmail(register.getEmail());
         user.setCreateAt(LocalDateTime.now());
@@ -105,12 +105,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public Register updateUserByPassword(String username, String oldPassword, String newPassword) {
         User user = userRepository.findUserByUsername(username).orElseThrow(() -> new NotFoundException("使用者不存在，修改失敗!"));
-        if (!Hash.getHash(oldPassword, user.getSalt()).equals(user.getUserPassword())) {
+        if (!passwordEncoder.matches(oldPassword,user.getUserPassword())) {
             throw new NotFoundException("舊密碼輸入錯誤，修改失敗!");
         }
-        String salt = Hash.getSalt();
-        user.setUserPassword(Hash.getHash(newPassword, salt));
-        user.setSalt(salt);
+        user.setUserPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         Register register = objectMapper.convertValue(user, Register.class);
         return register;

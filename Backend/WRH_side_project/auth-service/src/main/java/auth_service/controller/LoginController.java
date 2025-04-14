@@ -9,14 +9,21 @@ import auth_service.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/Login")
-public class UserController {
+public class LoginController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     @PostMapping("/Register")
     public ResponseEntity<ApiResponse<Register>> register(@RequestBody Register register){
@@ -24,30 +31,17 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("註冊成功", register));
     }
 
-    @GetMapping
+    @PostMapping
     public ResponseEntity<ApiResponse<Login>> Login(@RequestBody Register register){
         Login login=userService.checkUser(register);
+        UsernamePasswordAuthenticationToken authToken=new UsernamePasswordAuthenticationToken(register.getUserName(),register.getUserPassword());
+        authToken.setDetails(login);
+
+        Authentication authentication =authenticationManager.authenticate(authToken);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
         return ResponseEntity.ok(ApiResponse.success("登入成功",login));
     }
-
-    @DeleteMapping
-    public ResponseEntity<ApiResponse<Register>> deleteUser(@RequestBody Register register){
-        userService.deleteUser(register.getUserName());
-        return ResponseEntity.ok(ApiResponse.success("刪除成功",null));
-    }
-
-    @PutMapping("/Role")
-    public ResponseEntity<ApiResponse<Login>> addUserByRole(@RequestBody Register register){
-        Login login=userService.addUserByRole(register.getUserName(), register.getUserRole());
-        return ResponseEntity.ok(ApiResponse.success("新增成功",login));
-    }
-
-    @DeleteMapping("/Role")
-    public ResponseEntity<ApiResponse<Login>> deleteUserByRole(@RequestBody Register register){
-        Login login=userService.deleteUserByRole(register.getUserName(),register.getUserRole());
-        return ResponseEntity.ok(ApiResponse.success("刪除成功",login));
-    }
-
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<?> handleConflict(ConflictException ex){

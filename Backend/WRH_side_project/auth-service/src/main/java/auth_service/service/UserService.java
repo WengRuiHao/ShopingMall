@@ -28,13 +28,6 @@ public interface UserService {
      */
     Login checkUser(Register register);
 
-    /**
-     * 忘記密碼
-     * @param username
-     * @param password
-     * @return Register
-     */
-    Register ForgetUserByPassword(String username, String password);
 
     /**
      * 新增使用者
@@ -51,6 +44,14 @@ public interface UserService {
      * @return
      */
     void deleteUser(String username);
+
+    /**
+     * 忘記密碼
+     * @param username
+     * @param password
+     * @return Register
+     */
+    Register ForgetUserByPassword(String username, String password);
 
     /**
      * 修改使用者密碼
